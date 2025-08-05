@@ -45,6 +45,8 @@ allowed_origins = [
     "http://localhost:5173",
     "https://*.railway.app",
     "https://web-production-6f018.up.railway.app",
+    "https://sleven.shop",
+    "https://www.sleven.shop",
     "https://*.vercel.app",
     "https://*.netlify.app"
 ]
