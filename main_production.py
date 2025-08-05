@@ -44,9 +44,6 @@ allowed_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://*.railway.app",
-    "https://web-production-6f018.up.railway.app",
-    "https://sleven.shop",
-    "https://www.sleven.shop",
     "https://*.vercel.app",
     "https://*.netlify.app"
 ]
@@ -319,17 +316,17 @@ def get_caps(skip: int = 0, limit: int = 20, category: Optional[str] = None, db:
     caps = query.offset(skip).limit(limit).all()
     return caps
 
+@app.get("/api/caps/featured", response_model=List[CapResponse])
+def get_featured_caps(db: Session = Depends(get_db)):
+    caps = db.query(Cap).filter(Cap.is_featured == True).limit(10).all()
+    return caps
+
 @app.get("/api/caps/{cap_id}", response_model=CapResponse)
 def get_cap(cap_id: int, db: Session = Depends(get_db)):
     cap = db.query(Cap).filter(Cap.id == cap_id).first()
     if not cap:
         raise HTTPException(status_code=404, detail="Cap not found")
     return cap
-
-@app.get("/api/caps/featured", response_model=List[CapResponse])
-def get_featured_caps(db: Session = Depends(get_db)):
-    caps = db.query(Cap).filter(Cap.is_featured == True).limit(10).all()
-    return caps
 
 @app.post("/api/orders", response_model=dict)
 def create_order(order: OrderCreate, db: Session = Depends(get_db)):
