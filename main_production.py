@@ -7,7 +7,7 @@ Optimized for Railway deployment
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from pydantic import BaseModel, EmailStr
@@ -43,9 +43,9 @@ allowed_origins = [
     FRONTEND_URL,
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://*.railway.app",
-    "https://www.sleven.shop",
     "https://sleven.shop",
+    "https://www.sleven.shop",
+    "https://*.railway.app",
     "https://*.vercel.app",
     "https://*.netlify.app"
 ]
@@ -212,7 +212,44 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 # Initialize database
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    try:
+        # Try to create tables (will skip if they exist)
+        Base.metadata.create_all(bind=engine)
+        
+        # Check if we need to add missing columns (migration)
+        db = SessionLocal()
+        try:
+            # Test if is_active column exists by trying a query
+            result = db.execute(text("SELECT COUNT(*) FROM users WHERE is_active IS NOT NULL"))
+            result.fetchone()
+            print("Database schema is up to date")
+        except Exception as e:
+            print(f"Schema check failed: {e}")
+            # For SQLite, it's easier to recreate if column is missing
+            if "sqlite" in DATABASE_URL.lower():
+                db.close()
+                print("Recreating SQLite database with proper schema...")
+                Base.metadata.drop_all(bind=engine)
+                Base.metadata.create_all(bind=engine)
+                db = SessionLocal()
+                print("Database recreated successfully")
+            else:
+                # For PostgreSQL, try to add the column
+                try:
+                    db.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT true"))
+                    db.commit()
+                    print("Added is_active column to users table")
+                except:
+                    db.rollback()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Database initialization warning: {e}")
+        # For SQLite, we might need to recreate tables
+        if "no such column" in str(e).lower():
+            Base.metadata.drop_all(bind=engine)
+            Base.metadata.create_all(bind=engine)
+            print("Recreated database tables")
     
     # Seed data if empty
     db = SessionLocal()
@@ -330,48 +367,100 @@ def get_cap(cap_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cap not found")
     return cap
 
-@app.post("/api/orders", response_model=dict)
-def create_order(order: OrderCreate, db: Session = Depends(get_db)):
-    # For demo purposes, create a mock order
-    total_amount = 45.99  # Mock calculation
+@app.post("/api/orders", response_model=OrderResponse)
+def create_order(order: OrderCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Calculate total amount
+    total_amount = 0
+    order_items = []
     
-    order_data = {
-        "id": 1,
-        "total_amount": total_amount,
-        "status": "pending",
-        "shipping_address": order.shipping_address,
-        "phone": order.phone,
-        "created_at": datetime.utcnow().isoformat(),
-        "items": [{"cap_id": item.cap_id, "quantity": item.quantity, "price": 45.99} for item in order.items]
-    }
+    for item in order.items:
+        cap = db.query(Cap).filter(Cap.id == item.cap_id).first()
+        if not cap:
+            raise HTTPException(status_code=404, detail=f"Cap {item.cap_id} not found")
+        if cap.stock_quantity < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Not enough stock for {cap.name}")
+        
+        item_total = cap.price * item.quantity
+        total_amount += item_total
+        order_items.append({
+            "cap_id": cap.id,
+            "quantity": item.quantity,
+            "price": cap.price,
+            "cap": cap
+        })
     
-    return order_data
+    # Create order
+    db_order = Order(
+        user_id=current_user.id,
+        total_amount=total_amount,
+        shipping_address=order.shipping_address,
+        phone=order.phone
+    )
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    
+    # Create order items
+    for item_data in order_items:
+        db_item = OrderItem(
+            order_id=db_order.id,
+            cap_id=item_data["cap_id"],
+            quantity=item_data["quantity"],
+            price=item_data["price"]
+        )
+        db.add(db_item)
+        
+        # Update stock
+        cap = item_data["cap"]
+        cap.stock_quantity -= item_data["quantity"]
+    
+    db.commit()
+    
+    return OrderResponse(
+        id=db_order.id,
+        total_amount=db_order.total_amount,
+        status=db_order.status,
+        shipping_address=db_order.shipping_address,
+        phone=db_order.phone,
+        created_at=db_order.created_at,
+        items=[{
+            "cap_id": item["cap_id"],
+            "quantity": item["quantity"],
+            "price": item["price"],
+            "cap_name": item["cap"].name
+        } for item in order_items]
+    )
 
-@app.get("/api/orders", response_model=List[dict])
-def get_user_orders(db: Session = Depends(get_db)):
-    # Mock orders for demo
-    return [
-        {
-            "id": 1,
-            "total_amount": 45.99,
-            "status": "pending",
-            "shipping_address": "123 Main St",
-            "phone": "123-456-7890",
-            "created_at": datetime.utcnow().isoformat(),
-            "items": []
-        }
-    ]
+@app.get("/api/orders", response_model=List[OrderResponse])
+def get_user_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    orders = db.query(Order).filter(Order.user_id == current_user.id).all()
+    
+    result = []
+    for order in orders:
+        items = []
+        for item in order.items:
+            items.append({
+                "cap_id": item.cap_id,
+                "quantity": item.quantity,
+                "price": item.price,
+                "cap_name": item.cap.name if item.cap else "Unknown"
+            })
+        
+        result.append(OrderResponse(
+            id=order.id,
+            total_amount=order.total_amount,
+            status=order.status,
+            shipping_address=order.shipping_address,
+            phone=order.phone,
+            created_at=order.created_at,
+            items=items
+        ))
+    
+    return result
 
-@app.get("/api/me", response_model=dict)
-def get_current_user_info():
-    return {
-        "id": 1,
-        "email": "demo@sleven.com",
-        "full_name": "Demo User",
-        "phone": "123-456-7890",
-        "address": "123 Demo Street",
-        "created_at": datetime.utcnow().isoformat()
-    }
+@app.get("/api/me", response_model=UserResponse)
+def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
 
 # Initialize database on startup
 @app.on_event("startup")
