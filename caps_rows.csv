@@ -1,0 +1,5 @@
+id,created_at,name,name_ar,description,description_ar,price,image_url,category,brand,color,size,stock_quantity,is_featured,SKU-BARCODE
+1,2025-09-07 15:56:48+00,Blanc,Blanc,Premium Cap,Premium Cap,195,,Summer,Sleven,white,all,99,false,CAP-WH
+2,2025-09-07 16:30:36+00,Noir,Noir,Premium Cap,Premium Cap,195,,Summer,Sleven,Black,One Size,99,false,CAP-BL-NI
+3,2025-09-07 16:52:23+00,Marron,Marron,Premium Cap,Premium Cap,195,,Summer,Sleven,Brown,One Size,99,false,CAP-BR
+4,2025-10-07 10:05:30.968097+00,Campeone,Campeone,,Premium Cap,150,,Summer,Sleven,Black,One Size,100,true,CAP-BL-CH
