@@ -73,6 +73,8 @@ export class MoyasarService {
       console.log('🔐 Moyasar Auth Debug:', {
         secretKeyLength: this.secretKey.length,
         secretKeyPrefix: this.secretKey.substring(0, 15),
+        secretKeySuffix: this.secretKey.substring(this.secretKey.length - 10),
+        fullSecretKey: this.secretKey, // Show full key for debugging
         authStringLength: authString.length,
         authHeaderLength: authHeader.length,
         authHeaderPrefix: authHeader.substring(0, 25)
