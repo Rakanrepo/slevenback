@@ -82,6 +82,15 @@ export class MoyasarService {
 
       console.log('📦 Moyasar Payment Data:', JSON.stringify(moyasarPaymentData, null, 2));
 
+      console.log('🌐 Moyasar API Request:', {
+        url: `${this.apiUrl}/payments`,
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        }
+      });
+
       const response = await axios.post(`${this.apiUrl}/payments`, moyasarPaymentData, {
         headers: {
           'Authorization': authHeader,
@@ -106,7 +115,17 @@ export class MoyasarService {
       };
 
     } catch (error: any) {
-      console.error('❌ Moyasar payment creation error:', error.response?.data || error.message);
+      console.error('❌ Moyasar payment creation error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
       
       return {
         success: false,
