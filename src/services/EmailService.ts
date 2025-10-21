@@ -34,7 +34,7 @@ export class EmailService {
     try {
       console.log('📧 Sending invoice email to:', data.customerEmail);
 
-      if (!config.resend.apiKey) {
+      if (!this.resend) {
         throw new Error('Resend API key not configured');
       }
 
