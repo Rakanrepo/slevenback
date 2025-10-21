@@ -155,6 +155,8 @@ const startServer = async () => {
       console.log(`🌐 CORS Origin: ${config.corsOrigin}`);
       console.log(`📧 Resend API: ${config.resend.apiKey ? 'Configured' : 'Not configured'}`);
       console.log(`💳 Moyasar API: ${config.moyasar.secretKey ? 'Configured' : 'Not configured'}`);
+      console.log(`💳 Moyasar Secret Key: ${config.moyasar.secretKey ? `${config.moyasar.secretKey.substring(0, 10)}...` : 'Not set'}`);
+      console.log(`💳 Moyasar Public Key: ${config.moyasar.publicKey ? `${config.moyasar.publicKey.substring(0, 10)}...` : 'Not set'}`);
       console.log(`📦 Omniful API: ${config.omniful.apiKey ? 'Configured' : 'Not configured'}`);
     });
 

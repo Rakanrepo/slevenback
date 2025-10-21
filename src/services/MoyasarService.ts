@@ -29,7 +29,10 @@ export class MoyasarService {
       console.log('🔄 Creating payment with Moyasar:', {
         amount: paymentData.amount,
         currency: paymentData.currency,
-        payment_method: paymentData.payment_method
+        payment_method: paymentData.payment_method,
+        secretKeyLength: this.secretKey.length,
+        secretKeyPrefix: this.secretKey.substring(0, 10) + '...',
+        apiUrl: this.apiUrl
       });
 
       // Convert amount to smallest currency unit (halalas for SAR)
@@ -70,9 +73,16 @@ export class MoyasarService {
         throw new Error('Invalid payment method or missing payment data');
       }
 
+      const authHeader = `Basic ${Buffer.from(this.secretKey + ':').toString('base64')}`;
+      console.log('🔐 Moyasar auth header:', {
+        secretKeyLength: this.secretKey.length,
+        authHeaderLength: authHeader.length,
+        authHeaderPrefix: authHeader.substring(0, 20) + '...'
+      });
+
       const response = await axios.post(`${this.apiUrl}/payments`, moyasarPaymentData, {
         headers: {
-          'Authorization': `Basic ${Buffer.from(this.secretKey + ':').toString('base64')}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
       });
