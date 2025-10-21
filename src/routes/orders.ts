@@ -25,12 +25,15 @@ router.post('/', optionalAuth, validateRequest(orderSchemas.create), async (req:
       userId = guestUser.id;
     }
 
-    const orderData = {
-      ...req.body,
+    // Remove user_id from request body if it exists (frontend shouldn't send this)
+    const { user_id, ...orderData } = req.body;
+    
+    const finalOrderData = {
+      ...orderData,
       user_id: userId
     };
 
-    const order = await OrderModel.create(orderData);
+    const order = await OrderModel.create(finalOrderData);
     
     const response: ApiResponse = {
       success: true,
