@@ -35,7 +35,8 @@ app.use(cors({
       'http://localhost:5176',
       'http://localhost:5177',
       'http://localhost:5178',
-      'https://sleven.sa'
+      'https://sleven.sa',
+      'https://www.sleven.sa'
     ];
     
     if (allowedOrigins.includes(origin)) {
