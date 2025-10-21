@@ -11,10 +11,6 @@ const router = Router();
 // Create order
 router.post('/', optionalAuth, validateRequest(orderSchemas.create), async (req: Request, res: Response) => {
   try {
-    console.log('📦 Order creation request:', {
-      body: req.body,
-      user: req.user?.id
-    });
     
     let userId = req.user?.id;
     

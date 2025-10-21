@@ -6,12 +6,6 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
     const { error } = schema.validate(req.body);
     
     if (error) {
-      console.log('❌ Validation error:', {
-        path: req.path,
-        body: req.body,
-        error: error.details
-      });
-      
       return res.status(400).json({
         success: false,
         error: error.details[0]?.message || 'Validation error'

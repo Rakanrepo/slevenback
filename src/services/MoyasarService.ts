@@ -9,14 +9,6 @@ export class MoyasarService {
   constructor() {
     this.apiUrl = config.moyasar.apiUrl;
     this.secretKey = config.moyasar.secretKey;
-    
-    // Debug configuration
-    console.log('🔧 MoyasarService configuration:', {
-      apiUrl: this.apiUrl,
-      hasSecretKey: !!this.secretKey,
-      secretKeyLength: this.secretKey?.length || 0,
-      publicKey: config.moyasar.publicKey ? 'Set' : 'Not set'
-    });
   }
 
   async createPayment(paymentData: MoyasarPaymentRequest): Promise<MoyasarPaymentResponse> {
@@ -26,14 +18,7 @@ export class MoyasarService {
         throw new Error('Moyasar secret key is not configured');
       }
 
-      console.log('🔄 Creating payment with Moyasar:', {
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        payment_method: paymentData.payment_method,
-        secretKeyLength: this.secretKey.length,
-        secretKeyPrefix: this.secretKey.substring(0, 10) + '...',
-        apiUrl: this.apiUrl
-      });
+      console.log('🔄 Creating payment with Moyasar');
 
       // Convert amount to smallest currency unit (halalas for SAR)
       const moyasarAmount = Math.round(paymentData.amount * 100);
@@ -73,16 +58,9 @@ export class MoyasarService {
         throw new Error('Invalid payment method or missing payment data');
       }
 
-      const authHeader = `Basic ${Buffer.from(this.secretKey + ':').toString('base64')}`;
-      console.log('🔐 Moyasar auth header:', {
-        secretKeyLength: this.secretKey.length,
-        authHeaderLength: authHeader.length,
-        authHeaderPrefix: authHeader.substring(0, 20) + '...'
-      });
-
       const response = await axios.post(`${this.apiUrl}/payments`, moyasarPaymentData, {
         headers: {
-          'Authorization': authHeader,
+          'Authorization': `Basic ${Buffer.from(this.secretKey + ':').toString('base64')}`,
           'Content-Type': 'application/json',
         },
       });
