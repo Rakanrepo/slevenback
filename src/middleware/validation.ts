@@ -57,7 +57,8 @@ export const orderSchemas = {
         payment_type: Joi.string().optional()
       })
     ).min(1).required(),
-    payment_type: Joi.string().default('online')
+    payment_type: Joi.string().default('online'),
+    user_id: Joi.any().strip() // Remove user_id field during validation
   }),
   
   update: Joi.object({
