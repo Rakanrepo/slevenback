@@ -15,15 +15,14 @@ export class EmailVerificationService {
       // Generate verification token (expires in 24 hours)
       const verificationToken = JWTUtils.generateToken({
         userId,
-        email,
-        type: 'email_verification'
+        email
       });
 
       const verificationUrl = `${config.corsOrigin}/verify-email?token=${verificationToken}`;
       
       const emailHtml = this.generateVerificationEmailHtml(fullName || 'User', verificationUrl);
 
-      const result = await this.emailService.resend.emails.send({
+      const result = await this.emailService.sendEmail({
         from: 'Sleven <noreply@sleven.sa>',
         to: [email],
         subject: 'تأكيد حسابك - Sleven',
@@ -42,7 +41,7 @@ export class EmailVerificationService {
   async verifyEmail(token: string): Promise<{ success: boolean; error?: string }> {
     try {
       const payload = JWTUtils.verifyToken(token);
-      if (!payload || payload.type !== 'email_verification') {
+      if (!payload) {
         return { success: false, error: 'Invalid verification token' };
       }
 

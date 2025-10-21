@@ -74,7 +74,7 @@ class MoyasarService {
 
       return {
         success: true,
-        payment: response.data?.payment
+        payment: (response.data as { payment: any })?.payment
       };
     } catch (error) {
       console.error('❌ Moyasar payment creation error:', error);
@@ -127,7 +127,7 @@ class MoyasarService {
 
       return {
         success: true,
-        payment: response.data?.payment
+        payment: (response.data as { payment: any })?.payment
       };
     } catch (error) {
       console.error('Moyasar payment status error:', error);

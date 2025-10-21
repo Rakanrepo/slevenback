@@ -21,7 +21,12 @@ router.post('/register', validateRequest(authSchemas.register), async (req: Requ
     }
 
     // Create user
-    const user = await UserModel.create({ email, password, full_name, phone });
+    const user = await UserModel.create({ 
+      email, 
+      password, 
+      ...(full_name && { full_name }),
+      ...(phone && { phone })
+    });
     
     // Generate JWT token
     const token = JWTUtils.generateToken({
@@ -44,10 +49,10 @@ router.post('/register', validateRequest(authSchemas.register), async (req: Requ
       message: 'Registration successful'
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Registration failed'
     });
@@ -98,10 +103,10 @@ router.post('/login', validateRequest(authSchemas.login), async (req: Request, r
       message: 'Login successful'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Login failed'
     });
@@ -130,10 +135,10 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
       }
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get profile error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get profile'
     });
@@ -165,10 +170,10 @@ router.put('/me', authenticateToken, validateRequest(authSchemas.updateProfile),
       message: 'Profile updated successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Update profile error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update profile'
     });
@@ -211,10 +216,10 @@ router.put('/change-password', authenticateToken, validateRequest(authSchemas.ch
       message: 'Password updated successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Change password error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to change password'
     });
@@ -237,10 +242,10 @@ router.delete('/me', authenticateToken, async (req: Request, res: Response) => {
       message: 'Account deleted successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Delete account error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete account'
     });

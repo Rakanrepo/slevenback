@@ -15,10 +15,10 @@ router.get('/', async (req: Request, res: Response) => {
       data: caps
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get caps error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get caps'
     });
@@ -35,10 +35,10 @@ router.get('/featured', async (req: Request, res: Response) => {
       data: caps
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get featured caps error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get featured caps'
     });
@@ -49,6 +49,12 @@ router.get('/featured', async (req: Request, res: Response) => {
 router.get('/category/:category', async (req: Request, res: Response) => {
   try {
     const { category } = req.params;
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        error: 'Category parameter is required'
+      });
+    }
     const caps = await CapModel.findByCategory(category);
     
     const response: ApiResponse = {
@@ -56,10 +62,10 @@ router.get('/category/:category', async (req: Request, res: Response) => {
       data: caps
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get caps by category error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get caps by category'
     });
@@ -70,6 +76,12 @@ router.get('/category/:category', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const capId = parseInt(id);
 
     if (isNaN(capId)) {
@@ -92,10 +104,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       data: cap
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get cap error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get cap'
     });
@@ -113,10 +125,10 @@ router.post('/', validateRequest(capSchemas.create), async (req: Request, res: R
       message: 'Cap created successfully'
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error: any) {
     console.error('Create cap error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to create cap'
     });
@@ -127,6 +139,12 @@ router.post('/', validateRequest(capSchemas.create), async (req: Request, res: R
 router.put('/:id', validateRequest(capSchemas.update), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const capId = parseInt(id);
 
     if (isNaN(capId)) {
@@ -150,10 +168,10 @@ router.put('/:id', validateRequest(capSchemas.update), async (req: Request, res:
       message: 'Cap updated successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Update cap error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update cap'
     });
@@ -164,6 +182,12 @@ router.put('/:id', validateRequest(capSchemas.update), async (req: Request, res:
 router.put('/:id/stock', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const { quantity } = req.body;
     const capId = parseInt(id);
 
@@ -194,10 +218,10 @@ router.put('/:id/stock', async (req: Request, res: Response) => {
       message: 'Stock updated successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Update stock error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update stock'
     });
@@ -208,6 +232,12 @@ router.put('/:id/stock', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const capId = parseInt(id);
 
     if (isNaN(capId)) {
@@ -230,10 +260,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
       message: 'Cap deleted successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Delete cap error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete cap'
     });

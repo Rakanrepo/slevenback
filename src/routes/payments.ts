@@ -53,10 +53,10 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
       message: 'Payment created successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Create payment error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Payment creation failed'
     });
@@ -90,10 +90,10 @@ router.post('/applepay/validate', async (req: Request, res: Response) => {
       message: 'Merchant validation successful'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Apple Pay validation error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Merchant validation failed'
     });
@@ -104,6 +104,12 @@ router.post('/applepay/validate', async (req: Request, res: Response) => {
 router.get('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     
     // Get payment from database first
     const payment = await PaymentModel.findByMoyasarId(id);
@@ -139,10 +145,10 @@ router.get('/:id/status', async (req: Request, res: Response) => {
       }
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get payment status error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get payment status'
     });
@@ -234,10 +240,10 @@ router.post('/webhook/moyasar', async (req: Request, res: Response) => {
       message: 'Webhook processed successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Webhook processing error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Webhook processing failed'
     });
@@ -248,6 +254,12 @@ router.post('/webhook/moyasar', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const payment = await PaymentModel.findById(id);
     
     if (!payment) {
@@ -262,10 +274,10 @@ router.get('/:id', async (req: Request, res: Response) => {
       data: payment
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get payment error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get payment'
     });

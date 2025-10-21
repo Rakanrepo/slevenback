@@ -1,4 +1,12 @@
 // Frontend API client for the new backend
+declare global {
+  interface ImportMeta {
+    env: {
+      VITE_API_URL?: string;
+    };
+  }
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface ApiResponse<T = any> {
@@ -32,9 +40,9 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
@@ -84,8 +92,8 @@ class ApiClient {
       body: JSON.stringify(credentials),
     });
 
-    if (response.success && response.data?.token) {
-      this.setToken(response.data.token);
+    if (response.success && response.data && typeof response.data === 'object' && 'token' in response.data) {
+      this.setToken((response.data as { token: string }).token);
     }
 
     return response;

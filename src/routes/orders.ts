@@ -38,10 +38,10 @@ router.post('/', optionalAuth, validateRequest(orderSchemas.create), async (req:
       message: 'Order created successfully'
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error: any) {
     console.error('Create order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to create order'
     });
@@ -58,10 +58,10 @@ router.get('/my-orders', authenticateToken, async (req: Request, res: Response) 
       data: orders
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get user orders error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get orders'
     });
@@ -72,6 +72,12 @@ router.get('/my-orders', authenticateToken, async (req: Request, res: Response) 
 router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const order = await OrderModel.findById(id);
     
     if (!order) {
@@ -102,10 +108,10 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
       data: order
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get order'
     });
@@ -116,6 +122,12 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
 router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const order = await OrderModel.findById(id);
     
     if (!order) {
@@ -141,10 +153,10 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
       message: 'Order updated successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Update order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update order'
     });
@@ -161,10 +173,10 @@ router.get('/pending/pay-on-arrival', authenticateToken, async (req: Request, re
       data: order
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get pending Pay on Arrival order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get pending order'
     });
@@ -175,6 +187,12 @@ router.get('/pending/pay-on-arrival', authenticateToken, async (req: Request, re
 router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is required'
+      });
+    }
     const order = await OrderModel.findById(id);
     
     if (!order) {
@@ -213,10 +231,10 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
       message: 'Order deleted successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Delete order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete order'
     });
@@ -233,10 +251,10 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
       data: stats
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get order stats error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get order statistics'
     });

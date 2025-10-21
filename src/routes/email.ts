@@ -52,15 +52,15 @@ router.post('/send-invoice', async (req: Request, res: Response) => {
       const response: ApiResponse = {
         success: true,
         message: 'Invoice email sent successfully',
-        messageId: result.messageId
+        data: { messageId: result.messageId }
       };
-      res.json(response);
+      return res.json(response);
     } else {
       const response: ApiResponse = {
         success: false,
         error: result.error || 'Failed to send email'
       };
-      res.status(500).json(response);
+      return res.status(500).json(response);
     }
   } catch (error: any) {
     console.error('❌ Email route error:', error);
@@ -68,7 +68,7 @@ router.post('/send-invoice', async (req: Request, res: Response) => {
       success: false,
       error: error.message || 'Internal server error'
     };
-    res.status(500).json(response);
+    return res.status(500).json(response);
   }
 });
 

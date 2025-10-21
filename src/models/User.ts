@@ -77,6 +77,11 @@ export class UserModel {
         values.push(updates.phone);
       }
 
+      if (updates.is_verified !== undefined) {
+        fields.push(`is_verified = $${paramCount++}`);
+        values.push(updates.is_verified);
+      }
+
       if (fields.length === 0) {
         return await this.findById(id);
       }
@@ -132,7 +137,7 @@ export class UserModel {
       `;
       
       const result = await client.query(query, [passwordHash, id]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }
@@ -144,7 +149,7 @@ export class UserModel {
     try {
       const query = 'DELETE FROM users WHERE id = $1';
       const result = await client.query(query, [id]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }

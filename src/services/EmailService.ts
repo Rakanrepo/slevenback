@@ -9,6 +9,27 @@ export class EmailService {
     this.resend = new Resend(config.resend.apiKey);
   }
 
+  async sendEmail(data: { from: string; to: string[]; subject: string; html: string }): Promise<EmailResponse> {
+    try {
+      if (!config.resend.apiKey) {
+        throw new Error('Resend API key not configured');
+      }
+
+      const result = await this.resend.emails.send(data);
+
+      return {
+        success: true,
+        messageId: result.data?.id || 'unknown'
+      };
+    } catch (error: any) {
+      console.error('❌ Email sending error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to send email'
+      };
+    }
+  }
+
   async sendInvoiceEmail(data: InvoiceEmailData): Promise<EmailResponse> {
     try {
       console.log('📧 Sending invoice email to:', data.customerEmail);

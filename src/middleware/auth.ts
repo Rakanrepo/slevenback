@@ -58,8 +58,8 @@ export const authenticateToken = async (
     req.user = {
       id: user.id,
       email: user.email,
-      full_name: user.full_name,
-      phone: user.phone,
+      ...(user.full_name && { full_name: user.full_name }),
+      ...(user.phone && { phone: user.phone }),
       is_verified: user.is_verified
     };
 
@@ -90,8 +90,8 @@ export const optionalAuth = async (
           req.user = {
             id: user.id,
             email: user.email,
-            full_name: user.full_name,
-            phone: user.phone,
+            ...(user.full_name && { full_name: user.full_name }),
+            ...(user.phone && { phone: user.phone }),
             is_verified: user.is_verified
           };
         }

@@ -234,7 +234,7 @@ export class CapModel {
       `;
       
       const result = await client.query(query, [quantity, id]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }
@@ -246,7 +246,7 @@ export class CapModel {
     try {
       const query = 'DELETE FROM caps WHERE id = $1';
       const result = await client.query(query, [id]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }

@@ -86,13 +86,13 @@ router.get('/process-queue', async (req: Request, res: Response) => {
         message: `Processed ${processed} items, ${failed} failed`
       };
 
-      res.json(response);
+      return res.json(response);
     } finally {
       client.release();
     }
   } catch (error: any) {
     console.error('Process queue error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to process queue'
     });
@@ -145,13 +145,13 @@ router.post('/process-order', async (req: Request, res: Response) => {
         }
       };
 
-      res.json(response);
+      return res.json(response);
     } finally {
       client.release();
     }
   } catch (error: any) {
     console.error('Process order error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to process order'
     });
@@ -236,6 +236,12 @@ router.post('/retry-failed', async (req: Request, res: Response) => {
 router.get('/inventory/:productId', async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Product ID parameter is required'
+      });
+    }
     
     const result = await omnifulService.getInventoryStatus(productId);
     
@@ -251,10 +257,10 @@ router.get('/inventory/:productId', async (req: Request, res: Response) => {
       data: result.data
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Get inventory status error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get inventory status'
     });
@@ -280,10 +286,10 @@ router.post('/sync-product', async (req: Request, res: Response) => {
       message: 'Product synced successfully'
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error: any) {
     console.error('Sync product error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to sync product'
     });

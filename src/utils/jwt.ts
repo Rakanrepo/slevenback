@@ -12,7 +12,7 @@ export class JWTUtils {
   static generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
     return jwt.sign(payload, config.jwt.secret, {
       expiresIn: config.jwt.expiresIn,
-    });
+    } as jwt.SignOptions);
   }
 
   static verifyToken(token: string): JWTPayload | null {
@@ -33,6 +33,6 @@ export class JWTUtils {
       return null;
     }
 
-    return parts[1];
+    return parts[1] || null;
   }
 }

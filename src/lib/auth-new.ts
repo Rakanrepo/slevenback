@@ -33,7 +33,7 @@ class AuthService {
       }
 
       console.log('User registration completed successfully');
-      return { user: response.data?.user || null, error: null };
+      return { user: (response.data as { user: AuthUser })?.user || null, error: null };
 
     } catch (error) {
       console.error('Unexpected error during signup:', error);
@@ -52,7 +52,7 @@ class AuthService {
         return { user: null, error: response.error || 'Login failed' };
       }
 
-      return { user: response.data?.user || null, error: null };
+      return { user: (response.data as { user: AuthUser })?.user || null, error: null };
     } catch (error) {
       return { 
         user: null, 
@@ -80,7 +80,7 @@ class AuthService {
         return null;
       }
 
-      return response.data || null;
+      return (response.data as AuthUser) || null;
     } catch (error) {
       console.error('Error getting current user:', error);
       return null;
@@ -97,7 +97,7 @@ class AuthService {
       const response = await apiClient.updateProfile(updates);
       
       if (!response.success) {
-        return { success: false, error: response.error };
+        return { success: false, error: response.error || 'Update failed' };
       }
 
       return { success: true };

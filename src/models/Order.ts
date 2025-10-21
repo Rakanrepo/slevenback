@@ -178,7 +178,7 @@ export class OrderModel {
     try {
       const query = 'DELETE FROM orders WHERE id = $1';
       const result = await client.query(query, [id]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }

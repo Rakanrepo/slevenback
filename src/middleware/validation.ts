@@ -2,15 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
 
 export const validateRequest = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     const { error } = schema.validate(req.body);
     
     if (error) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
-        error: error.details[0].message
+        error: error.details[0]?.message || 'Validation error'
       });
-      return;
     }
     
     next();

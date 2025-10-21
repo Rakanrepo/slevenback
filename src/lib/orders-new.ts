@@ -40,7 +40,7 @@ class OrderService {
         return { order: null, error: response.error || 'Failed to create order' };
       }
 
-      return { order: response.data || null, error: null };
+      return { order: (response.data as Order) || null, error: null };
     } catch (error) {
       return { 
         order: null, 
@@ -57,7 +57,7 @@ class OrderService {
         return { order: null, error: response.error || 'Failed to get order' };
       }
 
-      return { order: response.data || null, error: null };
+      return { order: (response.data as Order) || null, error: null };
     } catch (error) {
       return { 
         order: null, 
@@ -74,7 +74,7 @@ class OrderService {
         return { orders: [], error: response.error || 'Failed to get orders' };
       }
 
-      return { orders: response.data || [], error: null };
+      return { orders: (response.data as Order[]) || [], error: null };
     } catch (error) {
       return { 
         orders: [], 
@@ -88,7 +88,7 @@ class OrderService {
       const response = await apiClient.updateOrder(orderId, updates);
 
       if (!response.success) {
-        return { success: false, error: response.error };
+        return { success: false, error: response.error || 'Update failed' };
       }
 
       return { success: true };
@@ -161,7 +161,7 @@ class OrderService {
         return { order: null, error: response.error || 'Failed to check for pending orders' };
       }
 
-      return { order: response.data || null, error: null };
+      return { order: (response.data as Order) || null, error: null };
     } catch (error) {
       return { 
         order: null, 

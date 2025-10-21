@@ -4,6 +4,7 @@ export interface User {
   email: string;
   full_name?: string;
   phone?: string;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +19,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
   full_name?: string;
   phone?: string;
+  is_verified?: boolean;
 }
 
 // Cap Types
