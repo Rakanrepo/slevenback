@@ -6,6 +6,12 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
     const { error } = schema.validate(req.body);
     
     if (error) {
+      console.log('❌ Validation error:', {
+        path: req.path,
+        body: req.body,
+        error: error.details
+      });
+      
       return res.status(400).json({
         success: false,
         error: error.details[0]?.message || 'Validation error'
@@ -51,10 +57,22 @@ export const orderSchemas = {
         cap_id: Joi.number().required(),
         quantity: Joi.number().positive().required(),
         price: Joi.number().positive().required(),
-        name: Joi.string().required(),
-        name_ar: Joi.string().required(),
+        name: Joi.string().optional(),
+        name_ar: Joi.string().optional(),
+        cap_name: Joi.string().optional(),
+        cap_name_ar: Joi.string().optional(),
         image_url: Joi.string().optional(),
         payment_type: Joi.string().optional()
+      }).custom((value, helpers) => {
+        // Ensure we have either name/name_ar or cap_name/cap_name_ar
+        const hasName = value.name || value.cap_name;
+        const hasNameAr = value.name_ar || value.cap_name_ar;
+        
+        if (!hasName || !hasNameAr) {
+          return helpers.error('any.custom', { message: 'Item must have both name and name_ar (or cap_name and cap_name_ar)' });
+        }
+        
+        return value;
       })
     ).min(1).required(),
     payment_type: Joi.string().default('online'),
