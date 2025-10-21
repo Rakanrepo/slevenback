@@ -28,9 +28,10 @@ export class MoyasarService {
       });
 
       const moyasarPaymentData: any = {
+        given_id: `sleven_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`, // Required for idempotency
         amount: moyasarAmount,
         currency: paymentData.currency,
-        description: "Sleven Payment",
+        description: paymentData.description || "Sleven Payment",
         metadata: {
           customer_name: paymentData.customer_name,
           customer_email: paymentData.customer_email,
@@ -38,8 +39,7 @@ export class MoyasarService {
           shipping_address: paymentData.shipping_address,
           quantity: paymentData.quantity,
           source: 'sleven_website',
-          original_amount: paymentData.amount,
-          original_description: paymentData.description
+          original_amount: paymentData.amount
         }
       };
 
@@ -55,8 +55,12 @@ export class MoyasarService {
           name: paymentData.card_data.name,
           number: paymentData.card_data.number.replace(/\s/g, ''),
           cvc: paymentData.card_data.cvc,
-          month: paymentData.card_data.month,
-          year: `20${paymentData.card_data.year}`
+          month: parseInt(paymentData.card_data.month),
+          year: parseInt(`20${paymentData.card_data.year}`),
+          statement_descriptor: 'Sleven Store',
+          '3ds': true,
+          manual: false,
+          save_card: false
         };
       } else {
         throw new Error('Invalid payment method or missing payment data');
@@ -73,6 +77,8 @@ export class MoyasarService {
         authHeaderLength: authHeader.length,
         authHeaderPrefix: authHeader.substring(0, 25)
       });
+
+      console.log('📦 Moyasar Payment Data:', JSON.stringify(moyasarPaymentData, null, 2));
 
       const response = await axios.post(`${this.apiUrl}/payments`, moyasarPaymentData, {
         headers: {
