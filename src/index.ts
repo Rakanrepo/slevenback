@@ -27,6 +27,8 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    console.log('🌐 CORS request from origin:', origin);
+    
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:5174', 
@@ -36,15 +38,27 @@ app.use(cors({
       'http://localhost:5177',
       'http://localhost:5178',
       'https://sleven.sa',
-      'https://www.sleven.sa'
+      'https://www.sleven.sa',
+      'https://sleven-backend-production.up.railway.app',
+      'https://web-production-6f018.up.railway.app'
     ];
     
     if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS allowed for origin:', origin);
       return callback(null, true);
     }
     
     // For development, allow any localhost origin
     if (origin && origin.startsWith('http://localhost:')) {
+      console.log('✅ CORS allowed for localhost origin:', origin);
+      return callback(null, true);
+    }
+    
+    console.log('❌ CORS rejected for origin:', origin);
+    
+    // Temporary: Allow all origins in development for debugging
+    if (config.nodeEnv === 'development') {
+      console.log('⚠️  Allowing origin in development mode:', origin);
       return callback(null, true);
     }
     
