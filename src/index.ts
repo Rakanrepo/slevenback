@@ -40,7 +40,8 @@ app.use(cors({
       'https://sleven.sa',
       'https://www.sleven.sa',
       'https://sleven-backend-production.up.railway.app',
-      'https://web-production-6f018.up.railway.app'
+      'https://web-production-6f018.up.railway.app',
+      'https://slevenlanding-j8vsex7im-rakanrepos-projects.vercel.app'
     ];
     
     if (allowedOrigins.includes(origin)) {
