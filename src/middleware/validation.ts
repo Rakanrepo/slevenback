@@ -70,6 +70,7 @@ export const orderSchemas = {
 
 export const paymentSchemas = {
   create: Joi.object({
+    order_id: Joi.string().uuid().required(),
     amount: Joi.number().positive().required(),
     currency: Joi.string().default('SAR'),
     description: Joi.string().required(),

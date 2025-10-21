@@ -25,9 +25,9 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
       });
     }
 
-    // Store payment in database (same as Supabase function)
+    // Store payment in database
     const payment = await PaymentModel.create({
-      order_id: paymentData.order_id || 'temp', // You might need to pass order_id
+      order_id: paymentData.order_id, // This should be a valid UUID from the order
       moyasar_payment_id: moyasarResult.payment!.id,
       amount: moyasarResult.payment!.amount,
       currency: moyasarResult.payment!.currency,

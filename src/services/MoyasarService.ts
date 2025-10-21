@@ -9,10 +9,23 @@ export class MoyasarService {
   constructor() {
     this.apiUrl = config.moyasar.apiUrl;
     this.secretKey = config.moyasar.secretKey;
+    
+    // Debug configuration
+    console.log('🔧 MoyasarService configuration:', {
+      apiUrl: this.apiUrl,
+      hasSecretKey: !!this.secretKey,
+      secretKeyLength: this.secretKey?.length || 0,
+      publicKey: config.moyasar.publicKey ? 'Set' : 'Not set'
+    });
   }
 
   async createPayment(paymentData: MoyasarPaymentRequest): Promise<MoyasarPaymentResponse> {
     try {
+      // Validate configuration
+      if (!this.secretKey) {
+        throw new Error('Moyasar secret key is not configured');
+      }
+
       console.log('🔄 Creating payment with Moyasar:', {
         amount: paymentData.amount,
         currency: paymentData.currency,
