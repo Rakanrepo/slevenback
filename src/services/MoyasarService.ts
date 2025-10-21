@@ -18,6 +18,23 @@ export class MoyasarService {
         throw new Error('Moyasar secret key is not configured');
       }
 
+      // Test API key with a simple request first
+      try {
+        const testResponse = await axios.get(`${this.apiUrl}/payments`, {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(this.secretKey + ':').toString('base64')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('✅ Moyasar API key test successful');
+      } catch (testError: any) {
+        console.error('❌ Moyasar API key test failed:', {
+          status: testError.response?.status,
+          data: testError.response?.data
+        });
+        throw new Error('Moyasar API key is invalid or account has issues');
+      }
+
       // Convert amount to smallest currency unit (halalas for SAR)
       const moyasarAmount = Math.round(paymentData.amount * 100);
       
