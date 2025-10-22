@@ -233,28 +233,10 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
           // Don't fail the request if Omniful sync fails
         }
 
-        // Deduct stock quantities
-        try {
-          const { CapModel } = await import('../models/Cap.js');
-          
-          for (const item of order.items || []) {
-            if (item.cap_id) {
-              const stockDeducted = await CapModel.deductStock(item.cap_id, item.quantity);
-              if (stockDeducted) {
-                console.log(`📦 Stock deducted for cap ${item.cap_id}: ${item.quantity} units`);
-              } else {
-                console.error(`❌ Failed to deduct stock for cap ${item.cap_id}: insufficient stock or cap not found`);
-              }
-            }
-          }
-        } catch (stockError: any) {
-          console.error('❌ Stock deduction failed:', stockError.message);
-          // Don't fail the request if stock deduction fails
-        }
-
-        // Send invoice email
+        // Send invoice email and deduct stock
         try {
           const { EmailService } = await import('../services/EmailService.js');
+          const { CapModel } = await import('../models/Cap.js');
           const emailService = new EmailService();
           
           const emailData = {
@@ -278,10 +260,29 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
           };
 
           if (emailData.customerEmail) {
+            // Send invoice email first
             const emailResult = await emailService.sendInvoiceEmail(emailData);
             console.log('📧 Invoice email sent:', emailResult.success ? 'Success' : emailResult.error);
+            
+            // If email was sent successfully, deduct stock quantities
+            if (emailResult.success) {
+              console.log('📦 Deducting stock quantities after successful email...');
+              
+              for (const item of order.items || []) {
+                if (item.cap_id) {
+                  const stockDeducted = await CapModel.deductStock(item.cap_id, item.quantity);
+                  if (stockDeducted) {
+                    console.log(`📦 Stock deducted for cap ${item.cap_id}: ${item.quantity} units`);
+                  } else {
+                    console.error(`❌ Failed to deduct stock for cap ${item.cap_id}: insufficient stock or cap not found`);
+                  }
+                }
+              }
+            } else {
+              console.log('⚠️ Email failed, skipping stock deduction');
+            }
           } else {
-            console.log('⚠️ No customer email found, skipping invoice email');
+            console.log('⚠️ No customer email found, skipping invoice email and stock deduction');
           }
         } catch (emailError: any) {
           console.error('❌ Invoice email failed:', emailError.message);
