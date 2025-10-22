@@ -240,6 +240,23 @@ export class CapModel {
     }
   }
 
+  static async deductStock(id: number, quantity: number): Promise<boolean> {
+    const client = await pool.connect();
+    
+    try {
+      const query = `
+        UPDATE caps
+        SET stock_quantity = stock_quantity - $1
+        WHERE id = $2 AND stock_quantity >= $1
+      `;
+      
+      const result = await client.query(query, [quantity, id]);
+      return (result.rowCount ?? 0) > 0;
+    } finally {
+      client.release();
+    }
+  }
+
   static async delete(id: number): Promise<boolean> {
     const client = await pool.connect();
     

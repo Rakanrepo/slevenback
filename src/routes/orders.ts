@@ -174,22 +174,11 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
       });
     }
 
-    // If updating with payment_id, verify the payment exists
+    // Log payment_id update (no validation needed since it's now TEXT field)
     if (req.body.payment_id) {
-      const { PaymentModel } = await import('../models/Payment.js');
-      const payment = await PaymentModel.findById(req.body.payment_id);
-      
-      if (!payment) {
-        return res.status(400).json({
-          success: false,
-          error: 'Payment not found. Please ensure the payment was created successfully.'
-        });
-      }
-      
-      console.log('✅ Payment exists, updating order:', {
+      console.log('💳 Updating order with payment_id:', {
         order_id: id,
-        payment_id: req.body.payment_id,
-        payment_status: payment.status
+        payment_id: req.body.payment_id
       });
     }
 
@@ -206,6 +195,105 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
       status: updatedOrder?.status,
       payment_id: updatedOrder?.payment_id
     });
+
+    // If status is being updated to 'paid', handle payment success logic
+    if (req.body.status === 'paid') {
+      console.log('💰 Processing payment success for order:', id);
+      
+      try {
+        // Find and delete any Pay on Arrival orders for the same user
+        const payOnArrivalOrders = await OrderModel.findByUserId(order.user_id);
+        const payOnArrivalOrder = payOnArrivalOrders.find(o => 
+          o.status === 'pending' && 
+          o.payment_type === 'pay_on_arrival' &&
+          o.id !== id
+        );
+
+        if (payOnArrivalOrder) {
+          console.log(`🗑️ Deleting Pay on Arrival order: ${payOnArrivalOrder.id}`);
+          await OrderModel.delete(payOnArrivalOrder.id);
+        }
+
+        // Sync with Omniful
+        try {
+          const { OmnifulService } = await import('../services/OmnifulService.js');
+          const omnifulService = new OmnifulService();
+          
+          const syncResult = await omnifulService.processQueueItem({
+            id: order.id,
+            user_id: order.user_id,
+            total_amount: order.total_amount,
+            currency: order.currency,
+            items: order.items
+          });
+
+          console.log('✅ Order synced with Omniful:', syncResult);
+        } catch (omnifulError: any) {
+          console.error('❌ Omniful sync failed:', omnifulError.message);
+          // Don't fail the request if Omniful sync fails
+        }
+
+        // Deduct stock quantities
+        try {
+          const { CapModel } = await import('../models/Cap.js');
+          
+          for (const item of order.items || []) {
+            if (item.cap_id) {
+              const stockDeducted = await CapModel.deductStock(item.cap_id, item.quantity);
+              if (stockDeducted) {
+                console.log(`📦 Stock deducted for cap ${item.cap_id}: ${item.quantity} units`);
+              } else {
+                console.error(`❌ Failed to deduct stock for cap ${item.cap_id}: insufficient stock or cap not found`);
+              }
+            }
+          }
+        } catch (stockError: any) {
+          console.error('❌ Stock deduction failed:', stockError.message);
+          // Don't fail the request if stock deduction fails
+        }
+
+        // Send invoice email
+        try {
+          const { EmailService } = await import('../services/EmailService.js');
+          const emailService = new EmailService();
+          
+          const emailData = {
+            customerName: order.shipping_address?.customer_name || 'عميل',
+            customerEmail: order.shipping_address?.customer_email || '',
+            orderId: order.id,
+            orderDate: order.created_at,
+            items: (order.items || []).map(item => ({
+              name: item.name || 'Item',
+              name_ar: item.name_ar || 'عنصر',
+              price: item.price,
+              quantity: item.quantity,
+              total: item.price * item.quantity
+            })),
+            subtotal: parseFloat(order.total_amount.toString()),
+            shipping: 0,
+            tax: 0,
+            total: parseFloat(order.total_amount.toString()),
+            shippingAddress: order.shipping_address?.address || 'لم يتم تحديد العنوان',
+            currency: order.currency || 'SAR'
+          };
+
+          if (emailData.customerEmail) {
+            const emailResult = await emailService.sendInvoiceEmail(emailData);
+            console.log('📧 Invoice email sent:', emailResult.success ? 'Success' : emailResult.error);
+          } else {
+            console.log('⚠️ No customer email found, skipping invoice email');
+          }
+        } catch (emailError: any) {
+          console.error('❌ Invoice email failed:', emailError.message);
+          // Don't fail the request if email fails
+        }
+
+        console.log('✅ Payment success processing completed for order:', id);
+      } catch (paymentSuccessError: any) {
+        console.error('❌ Payment success processing failed:', paymentSuccessError.message);
+        // Don't fail the main request if payment success processing fails
+      }
+    }
     
     const response: ApiResponse = {
       success: true,
