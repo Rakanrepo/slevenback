@@ -40,30 +40,43 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
       status: moyasarResult.payment!.status
     });
     
-    const payment = await PaymentModel.create({
-      order_id: paymentData.order_id, // This should be a valid UUID from the order
-      moyasar_payment_id: moyasarResult.payment!.id,
-      amount: moyasarResult.payment!.amount,
-      currency: moyasarResult.payment!.currency,
-      status: moyasarResult.payment!.status,
-      payment_method: paymentData.payment_method,
-      metadata: {
-        ...paymentData.metadata,
-        moyasar_payment: moyasarResult.payment,
-        customer_info: {
-          name: paymentData.customer_name,
-          email: paymentData.customer_email,
-          phone: paymentData.customer_phone
+    let payment;
+    try {
+      payment = await PaymentModel.create({
+        order_id: paymentData.order_id, // This should be a valid UUID from the order
+        moyasar_payment_id: moyasarResult.payment!.id,
+        amount: moyasarResult.payment!.amount,
+        currency: moyasarResult.payment!.currency,
+        status: moyasarResult.payment!.status,
+        payment_method: paymentData.payment_method,
+        metadata: {
+          ...paymentData.metadata,
+          moyasar_payment: moyasarResult.payment,
+          customer_info: {
+            name: paymentData.customer_name,
+            email: paymentData.customer_email,
+            phone: paymentData.customer_phone
+          }
         }
-      }
-    });
-    
-    console.log('✅ Payment stored in database:', {
-      payment_id: payment.id,
-      order_id: payment.order_id,
-      status: payment.status,
-      moyasar_id: payment.moyasar_payment_id
-    });
+      });
+      
+      console.log('✅ Payment stored in database:', {
+        payment_id: payment.id,
+        order_id: payment.order_id,
+        status: payment.status,
+        moyasar_id: payment.moyasar_payment_id
+      });
+    } catch (dbError: any) {
+      console.error('❌ Database payment creation failed:', {
+        error: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail,
+        constraint: dbError.constraint,
+        order_id: paymentData.order_id,
+        moyasar_id: moyasarResult.payment!.id
+      });
+      throw dbError;
+    }
 
     const response: ApiResponse = {
       success: true,
