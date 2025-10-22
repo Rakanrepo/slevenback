@@ -146,6 +146,25 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
       });
     }
 
+    // If updating with payment_id, verify the payment exists
+    if (req.body.payment_id) {
+      const { PaymentModel } = await import('../models/Payment.js');
+      const payment = await PaymentModel.findById(req.body.payment_id);
+      
+      if (!payment) {
+        return res.status(400).json({
+          success: false,
+          error: 'Payment not found. Please ensure the payment was created successfully.'
+        });
+      }
+      
+      console.log('✅ Payment exists, updating order:', {
+        order_id: id,
+        payment_id: req.body.payment_id,
+        payment_status: payment.status
+      });
+    }
+
     const updatedOrder = await OrderModel.update(id, req.body);
     
     const response: ApiResponse = {

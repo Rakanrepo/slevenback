@@ -48,10 +48,18 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
       success: true,
       data: {
         payment: moyasarResult.payment,
-        database_payment: payment
+        database_payment: payment,
+        payment_id: payment.id, // Explicitly return the database payment ID
+        order_id: payment.order_id
       },
       message: 'Payment created successfully'
     };
+
+    console.log('✅ Payment created successfully:', {
+      payment_id: payment.id,
+      order_id: payment.order_id,
+      moyasar_id: moyasarResult.payment!.id
+    });
 
     return res.json(response);
   } catch (error: any) {
@@ -59,6 +67,42 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
     return res.status(500).json({
       success: false,
       error: error.message || 'Payment creation failed'
+    });
+  }
+});
+
+// Get payment by ID
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment ID is required'
+      });
+    }
+
+    const payment = await PaymentModel.findById(id);
+    
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payment not found'
+      });
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: payment
+    };
+
+    return res.json(response);
+  } catch (error: any) {
+    console.error('Get payment error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get payment'
     });
   }
 });
