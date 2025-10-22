@@ -15,6 +15,13 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
   try {
     const paymentData = req.body;
     
+    console.log('🔄 Payment creation request:', {
+      order_id: paymentData.order_id,
+      amount: paymentData.amount,
+      payment_method: paymentData.payment_method,
+      customer_email: paymentData.customer_email
+    });
+    
     // Create payment with Moyasar
     const moyasarResult = await moyasarService.createPayment(paymentData);
     
@@ -26,6 +33,13 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
     }
 
     // Store payment in database
+    console.log('💾 Storing payment in database:', {
+      order_id: paymentData.order_id,
+      moyasar_id: moyasarResult.payment!.id,
+      amount: moyasarResult.payment!.amount,
+      status: moyasarResult.payment!.status
+    });
+    
     const payment = await PaymentModel.create({
       order_id: paymentData.order_id, // This should be a valid UUID from the order
       moyasar_payment_id: moyasarResult.payment!.id,
@@ -43,6 +57,13 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
         }
       }
     });
+    
+    console.log('✅ Payment stored in database:', {
+      payment_id: payment.id,
+      order_id: payment.order_id,
+      status: payment.status,
+      moyasar_id: payment.moyasar_payment_id
+    });
 
     const response: ApiResponse = {
       success: true,
@@ -58,7 +79,15 @@ router.post('/create', validateRequest(paymentSchemas.create), async (req: Reque
     console.log('✅ Payment created successfully:', {
       payment_id: payment.id,
       order_id: payment.order_id,
-      moyasar_id: moyasarResult.payment!.id
+      moyasar_id: moyasarResult.payment!.id,
+      status: payment.status
+    });
+
+    console.log('📤 Sending response to frontend:', {
+      payment_id: payment.id,
+      order_id: payment.order_id,
+      moyasar_status: moyasarResult.payment!.status,
+      database_status: payment.status
     });
 
     return res.json(response);

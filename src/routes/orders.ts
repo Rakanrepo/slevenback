@@ -11,6 +11,12 @@ const router = Router();
 // Create order
 router.post('/', optionalAuth, validateRequest(orderSchemas.create), async (req: Request, res: Response) => {
   try {
+    console.log('🔄 Order creation request:', {
+      user_id: req.user?.id,
+      total_amount: req.body.total_amount,
+      payment_type: req.body.payment_type,
+      items_count: req.body.items?.length
+    });
     
     let userId = req.user?.id;
     
@@ -31,7 +37,22 @@ router.post('/', optionalAuth, validateRequest(orderSchemas.create), async (req:
       user_id: userId
     };
 
+    console.log('💾 Creating order in database:', {
+      user_id: userId,
+      total_amount: orderData.total_amount,
+      payment_type: orderData.payment_type,
+      items: orderData.items
+    });
+    
     const order = await OrderModel.create(orderData);
+    
+    console.log('✅ Order created successfully:', {
+      order_id: order.id,
+      user_id: order.user_id,
+      status: order.status,
+      payment_type: order.payment_type,
+      total_amount: order.total_amount
+    });
     
     const response: ApiResponse = {
       success: true,
@@ -129,6 +150,13 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
         error: 'ID parameter is required'
       });
     }
+    
+    console.log('🔄 Order update request:', {
+      order_id: id,
+      user_id: req.user?.id,
+      update_data: req.body
+    });
+    
     const order = await OrderModel.findById(id);
     
     if (!order) {
@@ -165,7 +193,19 @@ router.put('/:id', authenticateToken, validateRequest(orderSchemas.update), asyn
       });
     }
 
+    console.log('💾 Updating order in database:', {
+      order_id: id,
+      payment_id: req.body.payment_id,
+      status: req.body.status
+    });
+    
     const updatedOrder = await OrderModel.update(id, req.body);
+    
+    console.log('✅ Order updated successfully:', {
+      order_id: updatedOrder?.id,
+      status: updatedOrder?.status,
+      payment_id: updatedOrder?.payment_id
+    });
     
     const response: ApiResponse = {
       success: true,
