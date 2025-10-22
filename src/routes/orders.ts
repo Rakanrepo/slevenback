@@ -242,6 +242,84 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
   }
 });
 
+// Handle payment success - sync with Omniful and clean up Pay on Arrival orders
+router.post('/payment-success', async (req: Request, res: Response) => {
+  try {
+    const { order_id } = req.body;
+    
+    if (!order_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order ID is required'
+      });
+    }
+
+    // Get the order
+    const order = await OrderModel.findById(order_id);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Update order status to paid
+    const updatedOrder = await OrderModel.update(order_id, {
+      status: 'paid'
+    });
+
+    // Find and delete any Pay on Arrival orders for the same user
+    const payOnArrivalOrders = await OrderModel.findByUserId(order.user_id);
+    const payOnArrivalOrder = payOnArrivalOrders.find(o => 
+      o.status === 'pending' && 
+      o.payment_type === 'pay_on_arrival' &&
+      o.id !== order_id
+    );
+
+    if (payOnArrivalOrder) {
+      console.log(`🗑️ Deleting Pay on Arrival order: ${payOnArrivalOrder.id}`);
+      await OrderModel.delete(payOnArrivalOrder.id);
+    }
+
+    // Sync with Omniful
+    try {
+      const { OmnifulService } = await import('../services/OmnifulService.js');
+      const omnifulService = new OmnifulService();
+      
+      const syncResult = await omnifulService.processQueueItem({
+        id: order.id,
+        user_id: order.user_id,
+        total_amount: order.total_amount,
+        currency: order.currency,
+        items: order.items
+      });
+
+      console.log('✅ Order synced with Omniful:', syncResult);
+    } catch (omnifulError: any) {
+      console.error('❌ Omniful sync failed:', omnifulError.message);
+      // Don't fail the request if Omniful sync fails
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        order: updatedOrder,
+        omniful_synced: true,
+        pay_on_arrival_cleaned: !!payOnArrivalOrder
+      },
+      message: 'Payment success processed and order synced with Omniful'
+    };
+
+    return res.json(response);
+  } catch (error: any) {
+    console.error('Payment success processing error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to process payment success'
+    });
+  }
+});
+
 // Get order statistics (admin only)
 router.get('/stats/overview', async (req: Request, res: Response) => {
   try {
